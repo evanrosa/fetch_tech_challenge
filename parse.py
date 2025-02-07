@@ -38,42 +38,59 @@ def parse_malformed_json(file_path):
     return receipts
 
 
-def extract_unique_keys_and_types(receipts):
+def extract_unique_keys(receipts):
     """
-    Extracts all unique keys and their data types from rewardsReceiptItemList,
-    counts the number of item lists, and finds the largest receipt.
+    Extracts all unique keys from:
+      1. Parent-level receipt fields (e.g., totalSpent, userId, rewardsReceiptStatus)
+      2. Nested fields in rewardsReceiptItemList.
     """
-    unique_keys = defaultdict(set)
-    total_items = 0  # Total count of all items in rewardsReceiptItemList
-    total_receipts_with_items = 0  # Number of receipts that have rewardsReceiptItemList
-    max_items = 0  # Most items in a single receipt
-    max_receipt_id = None  # ID of the receipt with the most items
+    parent_keys = defaultdict(set)
+    item_keys = defaultdict(set)
+    total_items = 0  
+    total_receipts_with_items = 0  
+    max_items = 0  
+    max_receipt_id = None  
 
-    def process_item(item, prefix=""):
+    def process_item(item, key_dict, prefix=""):
         """Recursively extracts keys and types, handling nested dictionaries."""
         for key, value in item.items():
             full_key = f"{prefix}{key}" if prefix else key
-            unique_keys[full_key].add(type(value).__name__)
+            key_dict[full_key].add(type(value).__name__)
 
-            # Recursively process nested dictionaries
             if isinstance(value, dict):
-                process_item(value, prefix=f"{full_key}.")
+                process_item(value, key_dict, prefix=f"{full_key}.")
 
     for receipt in receipts:
+        # Process parent-level fields (direct keys in the receipt object)
+        process_item(receipt, parent_keys)
+
+        # Process rewardsReceiptItemList separately
         if "rewardsReceiptItemList" in receipt and isinstance(receipt["rewardsReceiptItemList"], list):
             num_items = len(receipt["rewardsReceiptItemList"])
             total_items += num_items
-            total_receipts_with_items += 1  # Increment count of receipts containing an item list
+            total_receipts_with_items += 1  
 
-            # Track receipt with most items
             if num_items > max_items:
                 max_items = num_items
                 max_receipt_id = receipt.get("_id", {}).get("$oid", "Unknown ID")
 
             for item in receipt["rewardsReceiptItemList"]:
-                process_item(item)
+                process_item(item, item_keys)
 
-    return unique_keys, total_items, total_receipts_with_items, max_items, max_receipt_id
+    return parent_keys, item_keys, total_items, total_receipts_with_items, max_items, max_receipt_id
+
+def get_rewards_receipt_status(receipts):
+    """
+    Extracts the rewardsReceiptStatus field from each receipt.
+    Returns a dictionary with the count of each status.
+    """
+    status_counts = defaultdict(int)
+
+    for receipt in receipts:
+        status = receipt.get("rewardsReceiptStatus", "Unknown")
+        status_counts[status] += 1
+
+    return status_counts
 
 
 # --- Main Execution ---
@@ -85,7 +102,9 @@ if __name__ == "__main__":
     parsed_receipts = parse_malformed_json(file_path)
 
     # Step 2: Extract unique keys and count items
-    unique_keys_types, total_items, total_receipts_with_items, max_items, max_receipt_id = extract_unique_keys_and_types(parsed_receipts)
+    parent_keys, item_keys, total_items, total_receipts_with_items, max_items, max_receipt_id = extract_unique_keys(parsed_receipts)
+    
+    reward_receipt_status = get_rewards_receipt_status(parsed_receipts)
 
     # Step 3: Print key statistics
     print("\n🔢 **Item Statistics**:")
@@ -95,7 +114,15 @@ if __name__ == "__main__":
     print(f"📊 Average items per receipt (only those that contain rewardsReceiptItemList): {total_items / total_receipts_with_items if total_receipts_with_items else 0:.2f}")
     print(f"🏆 Receipt with the most items: {max_items} items (Receipt ID: {max_receipt_id})")
 
-    # Step 4: Print extracted keys for verification
-    print("\n🔍 Extracted Unique Keys & Data Types:")
-    for key, types in sorted(unique_keys_types.items()):
+    # Step 4: Print extracted parent-level keys
+    print("\n🔍 **Extracted Parent-Level Keys & Data Types:**")
+    for key, types in sorted(parent_keys.items()):
         print(f"{key}: {', '.join(types)}")
+
+    # Step 5: Print extracted rewardsReceiptItemList keys
+    print("\n🔍 **Extracted rewardsReceiptItemList Keys & Data Types:**")
+    for key, types in sorted(item_keys.items()):
+        print(f"{key}: {', '.join(types)}")
+        
+    print("\n🔍 **Extracted rewardsReceiptStatus:**")
+    print(f"{reward_receipt_status}")

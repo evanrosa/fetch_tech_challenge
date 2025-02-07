@@ -1,19 +1,21 @@
 # Receipts Table
 
-| Column Name                | Data Type    | Key Type    | Description                                                      |
-| -------------------------- | ------------ | ----------- | ---------------------------------------------------------------- |
-| id                         | UUID         | Primary Key | uuid for this receipt                                            |
-| user_id                    | UUID         | Foreign Key | uuid ID of the user who submitted the receipt                    |
-| bonus_points_earned        | INT          |             | Number of bonus points that were awarded upon receipt completion |
-| bonus_points_earned_reason | VARCHAR(255) |             | Event that triggered bonus points                                |
-| create_date                | TIMESTAMP    |             | The date that the event was created                              |
-| date_scanned               | TIMESTAMP    |             | Date that the user scanned their receipt                         |
-| finished_date              | TIMESTAMP    |             | Date that the receipt finished processing                        |
-| modify_date                | TIMESTAMP    |             | The date the event was modified                                  |
-| points_awarded_date        | TIMESTAMP    |             | The date we awarded points for the transaction                   |
-| points_earned              | DECIMAL      |             | The number of points earned for the receipt                      |
-| purchase_date              | TIMESTAMP    |             | The date of the purchase                                         |
-| purchased_item_count       | TINYINT      |             | Count of number of items on the receipt                          |
+| Column Name                | Data Type    | Key Type    | Description                                                                                       |
+| -------------------------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------- |
+| id                         | UUID         | Primary Key | uuid for this receipt                                                                             |
+| user_id                    | UUID         | Foreign Key | uuid ID of the user who submitted the receipt                                                     |
+| bonus_points_earned        | INT          |             | Number of bonus points that were awarded upon receipt completion                                  |
+| bonus_points_earned_reason | VARCHAR(255) |             | Event that triggered bonus points                                                                 |
+| create_date                | TIMESTAMP    |             | The date that the event was created                                                               |
+| date_scanned               | TIMESTAMP    |             | Date that the user scanned their receipt                                                          |
+| finished_date              | TIMESTAMP    |             | Date that the receipt finished processing                                                         |
+| modify_date                | TIMESTAMP    |             | The date the event was modified                                                                   |
+| points_awarded_date        | TIMESTAMP    |             | The date we awarded points for the transaction                                                    |
+| points_earned              | DECIMAL      |             | The number of points earned for the receipt                                                       |
+| purchase_date              | TIMESTAMP    |             | The date of the purchase                                                                          |
+| purchased_item_count       | TINYINT      |             | Count of number of items on the receipt                                                           |
+| rewards_receipt_status     | ENUM         |             | Status of the receipt. Possible values: `FINISHED`, `PENDING`, `REJECTED`, `SUBMITTED`, `FLAGGED` |
+| total_spent                | DECIMAL      |             | Total amount spent                                                                                |
 
 #### Receipts Notes:
 
