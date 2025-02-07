@@ -50,6 +50,7 @@ def extract_unique_keys(receipts):
     total_receipts_with_items = 0  
     max_items = 0  
     max_receipt_id = None  
+    list_of_review_reasons = set()
 
     def process_item(item, key_dict, prefix=""):
         """Recursively extracts keys and types, handling nested dictionaries."""
@@ -59,6 +60,20 @@ def extract_unique_keys(receipts):
 
             if isinstance(value, dict):
                 process_item(value, key_dict, prefix=f"{full_key}.")
+
+    # Get unique values from needsFetchReviewReason and add to list_of_review_reasons
+    def process_review_reasons_values(item, review_reasons_set):
+        if "needsFetchReviewReason" in item:
+            review_reasons = item["needsFetchReviewReason"]
+            
+            if isinstance(review_reasons, list):
+                review_reasons_set.update(filter(None, review_reasons))
+            elif isinstance(review_reasons, str):
+                for reason in review_reasons.split(","):
+                    cleaned_reason = reason.strip()
+                    if cleaned_reason:
+                        review_reasons_set.add(cleaned_reason)               
+
 
     for receipt in receipts:
         # Process parent-level fields (direct keys in the receipt object)
@@ -76,8 +91,9 @@ def extract_unique_keys(receipts):
 
             for item in receipt["rewardsReceiptItemList"]:
                 process_item(item, item_keys)
+                process_review_reasons_values(item, list_of_review_reasons)
 
-    return parent_keys, item_keys, total_items, total_receipts_with_items, max_items, max_receipt_id
+    return parent_keys, item_keys, total_items, total_receipts_with_items, max_items, max_receipt_id, list_of_review_reasons
 
 def get_rewards_receipt_status(receipts):
     """
@@ -102,11 +118,26 @@ if __name__ == "__main__":
     parsed_receipts = parse_malformed_json(file_path)
 
     # Step 2: Extract unique keys and count items
-    parent_keys, item_keys, total_items, total_receipts_with_items, max_items, max_receipt_id = extract_unique_keys(parsed_receipts)
+    parent_keys, item_keys, total_items, total_receipts_with_items, max_items, max_receipt_id, needs_fetch_review_reason = extract_unique_keys(parsed_receipts)
     
     reward_receipt_status = get_rewards_receipt_status(parsed_receipts)
 
-    # Step 3: Print key statistics
+    # Step 3: Print key statistics for rewards and rewardsReceiptItemList
+    print("\n📋 **Receipt Statistics**:")
+    print(f"🧾 Total receipts: {len(parsed_receipts)}")
+    print(f"📊 Receipts with rewardsReceiptItemList: {total_receipts_with_items} ({total_receipts_with_items / len(parsed_receipts) * 100:.2f}%)")
+    print(f"📊 Receipts without rewardsReceiptItemList: {len(parsed_receipts) - total_receipts_with_items} ({(len(parsed_receipts) - total_receipts_with_items) / len(parsed_receipts) * 100:.2f}%)")
+    print(f"📊 Average items per receipt: {total_items / len(parsed_receipts) if parsed_receipts else 0:.2f}")
+    print(f"📊 Average items per receipt (only those that contain rewardsReceiptItemList): {total_items / total_receipts_with_items if total_receipts_with_items else 0:.2f}")
+    print(f"🏆 Receipt with the most items: {max_items} items (Receipt ID: {max_receipt_id})")
+    print(f"📊 Rewards Receipt Status: {reward_receipt_status}")
+    
+    # Step 4: Print extracted parent-level keys
+    print("\n🔍 **Extracted Parent-Level Keys & Data Types:**")
+    for key, types in sorted(parent_keys.items()):
+        print(f"{key}: {', '.join(types)}")
+    
+    # Step 5: Print item statistics
     print("\n🔢 **Item Statistics**:")
     print(f"📦 Total individual items in rewardsReceiptItemList: {total_items}")
     print(f"📝 Number of receipts that contain rewardsReceiptItemList: {total_receipts_with_items}")
@@ -114,15 +145,9 @@ if __name__ == "__main__":
     print(f"📊 Average items per receipt (only those that contain rewardsReceiptItemList): {total_items / total_receipts_with_items if total_receipts_with_items else 0:.2f}")
     print(f"🏆 Receipt with the most items: {max_items} items (Receipt ID: {max_receipt_id})")
 
-    # Step 4: Print extracted parent-level keys
-    print("\n🔍 **Extracted Parent-Level Keys & Data Types:**")
-    for key, types in sorted(parent_keys.items()):
-        print(f"{key}: {', '.join(types)}")
-
-    # Step 5: Print extracted rewardsReceiptItemList keys
+    # Step 6: Print extracted rewardsReceiptItemList keys
     print("\n🔍 **Extracted rewardsReceiptItemList Keys & Data Types:**")
     for key, types in sorted(item_keys.items()):
         print(f"{key}: {', '.join(types)}")
-        
-    print("\n🔍 **Extracted rewardsReceiptStatus:**")
-    print(f"{reward_receipt_status}")
+    print(f"\n📝 **Review Reasons:**")
+    print(needs_fetch_review_reason)
