@@ -1,3 +1,15 @@
+# Users Table
+
+| Column Name    | Data Type | Key Type    | Description                                       |
+| -------------- | --------- | ----------- | ------------------------------------------------- |
+| id             | UUID      | Primary Key | uuid for the user. This is the user_id            |
+| active         | BOOLEAN   |             | Is the user active on the app                     |
+| create_date    | TIMESTAMP |             | The date that the user was created                |
+| last_login     | TIMESTAMP |             | The date that the user last logged into the app   |
+| role           | TIMESTAMP |             | The date that the user last logged into the app   |
+| sign_up_source | ENUM      |             | Source of user sign up. Values: `Google`, `Email` |
+| state          | CHAR(2)   |             | State the user is from when signed in.            |
+
 # Receipts Table
 
 | Column Name                | Data Type    | Key Type    | Description                                                                              |
