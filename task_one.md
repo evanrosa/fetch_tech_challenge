@@ -1,35 +1,62 @@
 # Users Table
 
-| Column Name    | Data Type | Key Type    | Description                                       |
-| -------------- | --------- | ----------- | ------------------------------------------------- |
-| id             | UUID      | Primary Key | uuid for the user. This is the user_id            |
-| active         | BOOLEAN   |             | Is the user active on the app                     |
-| create_date    | TIMESTAMP |             | The date that the user was created                |
-| last_login     | TIMESTAMP |             | The date that the user last logged into the app   |
-| role           | ENUM      |             | Role of users. Values: `consumer`, `fetch-staff`  |
-| sign_up_source | ENUM      |             | Source of user sign up. Values: `Google`, `Email` |
-| state          | CHAR(2)   |             | State the user is from when signed in.            |
+| Column Name    | Data Type | Key Type    | Description                                            |
+| -------------- | --------- | ----------- | ------------------------------------------------------ |
+| id             | UUID      | Primary Key | Unique identifier for the user (UUID format).          |
+| active         | BOOLEAN   |             | Indicates whether the user is currently active.        |
+| create_date    | TIMESTAMP |             | Date and time when the user account was created.       |
+| last_login     | TIMESTAMP |             | Date and time of the user's last login.                |
+| role           | ENUM      |             | User role. Possible values: 'consumer', 'fetch-staff'. |
+| sign_up_source | ENUM      |             | Source of user sign up. Values: Google, Email          |
+| state          | CHAR(2)   |             | US state abbreviation (e.g., 'CA', 'NY').              |
+
+---
+
+### Receipts Notes:
+
+    It can be argued that sign_up_source can have its own table and mapped back to the User Table. I'm assuming no other sign up sources will be added given the current data.
+
+---
 
 # Brands Table
 
-| Column Name   | Data Type    | Key Type    | Description                                             |
-| ------------- | ------------ | ----------- | ------------------------------------------------------- |
-| id            | UUID         | Primary Key | uuid for the brand. This is the unique ID for the brand |
-| barcode       | VARCHAR(255) |             | Barcode of the purchased item                           |
-| brand_code    | VARCHAR(255) |             | code of brand                                           |
-| category      | VARCHAR(255) |             | category of brand                                       |
-| category_code | VARCHAR(255) |             | category code of brand                                  |
-| cpg_id        | UUID         |             | cpg id of brand                                         |
-| ref           | ENUM         |             | ref of brand. Values: `Cpgs`, `Cogs`                    |
-| name          | VARCHAR(255) |             | name of brand                                           |
-| top_brand     | BOOLEAN      |             | Is this a top brand                                     |
+| Column Name   | Data Type    | Key Type    | Description                                              |
+| ------------- | ------------ | ----------- | -------------------------------------------------------- |
+| id            | UUID         | Primary Key | UUID for the brand. This is the unique ID for the brand  |
+| created_date  | TIMESTAMP    |             | Date when brand was added (default to current timestamp) |
+| barcode       | VARCHAR(255) | UNIQUE      | Barcode of the purchased item                            |
+| brand_code    | VARCHAR(255) |             | Code of brand                                            |
+| category      | VARCHAR(255) |             | Category of brand                                        |
+| category_code | VARCHAR(255) |             | Category code of brand                                   |
+| cpg_id        | UUID         |             | ID to possible CPG table.                                |
+| ref           | ENUM         |             | Ref of brand. Values: `Cpgs`, `Cogs`                     |
+| name          | VARCHAR(255) |             | Name of brand                                            |
+| top_brand     | BOOLEAN      |             | Boolean flag indicating if this is a top brand           |
+
+---
+
+### Brands Notes:
+
+    Not sure what the cpg_id is used for. Could it link to a separate table? If so, it can be a foreign key.
+
+---
+
+## **Brand Table Indexes**
+
+| Index Name       | Column(s)    | Purpose                                      |
+| ---------------- | ------------ | -------------------------------------------- |
+| `idx_brand_code` | `brand_code` | Speeds up lookups by brand code              |
+| `idx_barcode`    | `barcode`    | Speeds up barcode-based queries              |
+| `idx_cpg_id`     | `cpg_id`     | Optimizes foreign key joins with `cpg` table |
+
+---
 
 # Receipts Table
 
 | Column Name                | Data Type    | Key Type    | Description                                                                              |
 | -------------------------- | ------------ | ----------- | ---------------------------------------------------------------------------------------- |
-| id                         | UUID         | Primary Key | uuid for this receipt                                                                    |
-| user_id                    | UUID         | Foreign Key | uuid ID of the user who submitted the receipt. Links to user.id                          |
+| id                         | UUID         | Primary Key | UUID for this receipt                                                                    |
+| user_id                    | UUID         | Foreign Key | UUID ID of the user who submitted the receipt. Links to `users.id`                       |
 | bonus_points_earned        | INT          |             | Number of bonus points that were awarded upon receipt completion                         |
 | bonus_points_earned_reason | VARCHAR(255) |             | Event that triggered bonus points                                                        |
 | create_date                | TIMESTAMP    |             | The date that the event was created                                                      |
@@ -37,27 +64,43 @@
 | finished_date              | TIMESTAMP    |             | Date that the receipt finished processing                                                |
 | modify_date                | TIMESTAMP    |             | The date the event was modified                                                          |
 | points_awarded_date        | TIMESTAMP    |             | The date we awarded points for the transaction                                           |
-| points_earned              | DECIMAL      |             | The number of points earned for the receipt                                              |
+| points_earned              | INT          |             | The number of points earned for the receipt                                              |
 | purchase_date              | TIMESTAMP    |             | The date of the purchase                                                                 |
-| purchased_item_count       | TINYINT      |             | Count of number of items on the receipt                                                  |
+| purchased_item_count       | SMALLINT     |             | Count of number of items on the receipt                                                  |
 | rewards_receipt_status     | ENUM         |             | Status of the receipt. Values: `FINISHED`, `PENDING`, `REJECTED`, `SUBMITTED`, `FLAGGED` |
 | total_spent                | DECIMAL      |             | Total amount spent                                                                       |
 
-#### Receipts Notes:
+---
+
+## **Receipts Table Indexes**
+
+| Index Name           | Column(s)                | Purpose                                       |
+| -------------------- | ------------------------ | --------------------------------------------- |
+| `idx_total_spent`    | `total_spent`            | Speeds up lookups by total spent              |
+| `idx_purchase_date`  | `purchase_date`          | Optimizes queries filtering by purchase date  |
+| `idx_receipt_status` | `rewards_receipt_status` | Speeds up status-based queries                |
+| `idx_user_id`        | `user_id`                | Improves performance for user receipt lookups |
+| `idx_date_scanned`   | `date_scanned`           | Optimizes searches by scan date               |
+
+---
+
+### Receipts Notes:
 
     Receipts table ID orginally is a MongoDB ObjectID and will need to be converted to a UUID.
+
+---
 
 # Receipt Item Table
 
 | Column Name                            | Data Type    | Key Type    | Description                                                                               |
 | -------------------------------------- | ------------ | ----------- | ----------------------------------------------------------------------------------------- |
 | id                                     | UUID         | Primary Key | uuid unique identifier for each receipt                                                   |
-| receipt_id                             | UUID         | Foreign Key | Links to receipts.id                                                                      |
-| barcode                                | VARCHAR(255) |             | Barcode of the purchased item                                                             |
+| receipt_id                             | UUID         | Foreign Key | Links to receipts in receipt table                                                        |
+| barcode                                | VARCHAR(255) | Foreign Key | Barcode of the purchased item. References barcode in brand table.                         |
 | description                            | TEXT         |             | Description of the purchased item                                                         |
 | final_price                            | DECIMAL      |             | Final price of the item after discounts                                                   |
 | item_price                             | DECIMAL      |             | Original item price                                                                       |
-| item_number                            | VERCHAR(125) |             | item number of product                                                                    |
+| item_number                            | VARCHAR(125) |             | Item number of product                                                                    |
 | price_after_coupon                     | DECIMAL      |             | Price after applying coupon                                                               |
 | needs_fetch_review                     | BOOLEAN      |             | Whether the item requires review                                                          |
 | needs_fetch_review_reason              | ENUM         |             | Reason for flag for fetch review. Values: `POINTS_GREATER_THAN_THRESHOLD`, `USER_FLAGGED` |
@@ -67,7 +110,7 @@
 | original_meta_brite_item_price         | DECIMAL      |             | Original meta brite price                                                                 |
 | original_meta_brite_barcode            | VARCHAR(255) |             | Orginal meta brite barcode                                                                |
 | original_meta_brite_description        | TEXT         |             | Description of meta brite barcode                                                         |
-| original_meta_brite_quantity_purchased | TINYINT(50)  |             | meta brite quantity purchased                                                             |
+| original_meta_brite_quantity_purchased | SMALLINT(50) |             | Meta brite quantity purchased                                                             |
 | partner_item_id                        | VARCHAR(50)  |             | Partner's item ID for reference                                                           |
 | points_not_awarded_reason              | TEXT         |             | Reason points were not rewarded                                                           |
 | points_earned                          | SMALLINT     |             | Points Earned                                                                             |
@@ -82,11 +125,23 @@
 | user_flagged_new_item                  | BOOLEAN      |             | When user flags new item                                                                  |
 | user_flagged_price                     | DECIMAL      |             | When user flags price                                                                     |
 | user_flagged_quantity                  | TINYINT      |             | When user flags quantity                                                                  |
-| brand_code                             | VARCHAR(255) |             | code of brand                                                                             |
-| competitor_rewards_group               | TEXT         |             | competitor reward group                                                                   |
+| brand_code                             | VARCHAR(255) | Foreign Key | Code of brand. References brand code in brands table.                                     |
+| competitor_rewards_group               | TEXT         |             | Competitor reward group                                                                   |
 | competitive_product                    | BOOLEAN      |             | Is it a competitive product                                                               |
 | discounted_item_price                  | DECIMAL      |             | Price of discounted Item                                                                  |
-| deleted                                | BOOLEAN      |             | was item deleted                                                                          |
+| deleted                                | BOOLEAN      |             | Was item deleted                                                                          |
+
+---
+
+## **Receipt Item Table Indexes**
+
+| Index Name       | Column(s)    | Purpose                                  |
+| ---------------- | ------------ | ---------------------------------------- |
+| `idx_receipt_id` | `receipt_id` | Optimizes joins with `receipts` table    |
+| `idx_brand_code` | `brand_code` | Speeds up queries filtering by brand     |
+| `idx_barcode`    | `barcode`    | Improves performance for barcode lookups |
+
+---
 
 #### Receipt Item Notes:
 
