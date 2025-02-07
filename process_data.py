@@ -144,59 +144,62 @@ def get_rewards_receipt_status(receipts):
 
 # --- Main Execution ---
 if __name__ == "__main__":
-    #####################################################################################################################################################################File path. Change this to the path of the JSON file you want to process. In this case, it's users.json, receipts.json, or brands.json.#####################################################################################################################################################################
-    file_path = "brands.json"
+    # 📂 Define the file path (Change this as needed)
+    file_path = "users.json"
 
-    # Step 1: Parse data from JSON file
+    # Step 1: Parse JSON data
     parsed_data = parse_malformed_json(file_path)
 
     # Step 2: Extract unique keys and count items
     parent_keys, item_keys, total_items, total_data_points_with_items, max_items, max_data_id, needs_fetch_review_reason, list_of_sign_up_sources, list_of_brand_refs = extract_unique_keys(parsed_data)
     
+    # Get rewardsReceiptStatus (for receipts only)
     reward_receipt_status = get_rewards_receipt_status(parsed_data)
 
-    # Step 3: Print key statistics
-    if file_path == "receipts.json":
-        print("\n📋 **Data Statistics**:")
-        print(f"🧾 Total receipts: {len(parsed_data)}")
-        print(f"📊 Receipts with rewardsReceiptItemList: {total_data_points_with_items} ({total_data_points_with_items / len(parsed_data) * 100:.2f}%)")
-        print(f"📊 Receipts without rewardsReceiptItemList: {len(parsed_data) - total_data_points_with_items} ({(len(parsed_data) - total_data_points_with_items) / len(parsed_data) * 100:.2f}%)")
-        print(f"📊 Average items per receipt: {total_items / len(parsed_data) if parsed_data else 0:.2f}")
-        print(f"📊 Average items per receipt (only those that contain rewardsReceiptItemList): {total_items / total_data_points_with_items if total_data_points_with_items else 0:.2f}")
-        print(f"🏆 Receipt with the most items: {max_items} items (Receipt ID: {max_data_id})")
-        print(f"📊 Rewards Receipt Status: {reward_receipt_status}")
-        
-        print("\n🔍 **Extracted Parent-Level Keys & Data Types:**")
-        for key, types in sorted(parent_keys.items()):
-            print(f"{key}: {', '.join(types)}")
-        
-        print("\n🔢 **Item Statistics**:")
-        print(f"📦 Total individual items in rewardsReceiptItemList: {total_items}")
-        print(f"📝 Number of receipts that contain rewardsReceiptItemList: {total_data_points_with_items}")
-        print(f"🛒 Average items per receipt (including those without items): {total_items / len(parsed_data) if parsed_data else 0:.2f}")
-        print(f"📊 Average items per receipt (only those that contain rewardsReceiptItemList): {total_items / total_data_points_with_items if total_data_points_with_items else 0:.2f}")
-        print(f"🏆 Receipt with the most items: {max_items} items (Receipt ID: {max_data_id})")
+    # 🔍 Common Statistics
+    total_data_points = len(parsed_data)
 
-        print("\n🔍 **Extracted rewardsReceiptItemList Keys & Data Types:**")
-        for key, types in sorted(item_keys.items()):
-            print(f"{key}: {', '.join(types)}")
-        print(f"\n📝 **Review Reasons:**")
-        print(needs_fetch_review_reason)
-    elif file_path == "users.json":
-        print("\n📋 **Data Statistics**:")
-        print(f"🧾 Total users: {len(parsed_data)}")
-        
-        print("\n🔍 **Extracted Parent-Level Keys & Data Types:**")
+    # **Dictionary-based dispatch pattern for cleaner conditional logic**
+    file_stats = {
+        "receipts.json": {
+            "title": "Receipts Data Statistics",
+            "total": total_data_points,
+            "with_items": total_data_points_with_items,
+            "without_items": total_data_points - total_data_points_with_items,
+            "avg_items": total_items / total_data_points if total_data_points else 0,
+            "avg_items_with": total_items / total_data_points_with_items if total_data_points_with_items else 0,
+            "top_item_count": max_items,
+            "top_item_receipt": max_data_id,
+            "extra": f"📊 Rewards Receipt Status: {reward_receipt_status}",
+        },
+        "users.json": {
+            "title": "User Data Statistics",
+            "total": total_data_points,
+            "extra": f"📝 Sign Up Sources:\n{json.dumps(list(list_of_sign_up_sources), indent=2)}",
+        },
+        "brands.json": {
+            "title": "Brand Data Statistics",
+            "total": total_data_points,
+            "extra": f"📝 Brand References:\n{json.dumps(list(list_of_brand_refs), indent=2)}",
+        }
+    }
+
+    # 📌 Print relevant statistics based on file type
+    if file_path in file_stats:
+        stats = file_stats[file_path]
+        print(f"\n📋 **{stats['title']}**")
+        print(f"🧾 Total entries: {stats['total']}")
+
+        if "with_items" in stats:
+            print(f"📊 Entries with items: {stats['with_items']} ({(stats['with_items'] / stats['total']) * 100:.2f}%)")
+            print(f"📊 Entries without items: {stats['without_items']} ({(stats['without_items'] / stats['total']) * 100:.2f}%)")
+            print(f"📊 Average items per entry: {stats['avg_items']:.2f}")
+            print(f"📊 Average items per entry (only those that contain items): {stats['avg_items_with']:.2f}")
+            print(f"🏆 Entry with most items: {stats['top_item_count']} (ID: {stats['top_item_receipt']})")
+
+        print(f"\n🔍 **Extracted Parent-Level Keys & Data Types:**")
         for key, types in sorted(parent_keys.items()):
             print(f"{key}: {', '.join(types)}")
-        print(f"\n📝 **Sign Up Sources:**")
-        print(list_of_sign_up_sources)
-    elif file_path == "brands.json":
-        print("\n📋 **Data Statistics**:")
-        print(f"🧾 Total brands: {len(parsed_data)}")
-        
-        print("\n🔍 **Extracted Parent-Level Keys & Data Types:**")
-        for key, types in sorted(parent_keys.items()):
-            print(f"{key}: {', '.join(types)}")
-        print(f"\n📝 **Brand References:**")
-        print(list_of_brand_refs)
+
+        if "extra" in stats:
+            print(f"\n{stats['extra']}")
