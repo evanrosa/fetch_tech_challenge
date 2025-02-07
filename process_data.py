@@ -51,9 +51,12 @@ def extract_unique_keys(data):
     max_data_id = None  
     list_of_review_reasons = set()
     list_of_sign_up_sources = set()
+    list_of_brand_refs = set() 
 
     def process_item(item, key_dict, prefix=""):
-        """Recursively extracts keys and types, handling nested dictionaries."""
+        """
+        Recursively extracts keys and types, handling nested dictionaries.
+        """
         for key, value in item.items():
             full_key = f"{prefix}{key}" if prefix else key
             key_dict[full_key].add(type(value).__name__)
@@ -61,8 +64,10 @@ def extract_unique_keys(data):
             if isinstance(value, dict):
                 process_item(value, key_dict, prefix=f"{full_key}.")
 
-    # Get unique values from needsFetchReviewReason and add to list_of_review_reasons. This should only be for receipts
     def process_review_reasons_values(item, review_reasons_set):
+        """ 
+        Extracts all unique values from 'needsFetchReviewReason' and adds them to a given set. Only for receipts.
+        """
         if "needsFetchReviewReason" in item:
             review_reasons = item["needsFetchReviewReason"]
             
@@ -74,8 +79,10 @@ def extract_unique_keys(data):
                     if cleaned_reason:
                         review_reasons_set.add(cleaned_reason)               
 
-    # Get unique keys and data types for each signUpSource and add it to a set. This is only for users.
     def process_sign_up_sources(item, sign_up_sources_set):
+        """ 
+        Extracts all unique values from 'signUpSource' and adds them to a given set. Only for users.
+        """
         if "signUpSource" in item:
             sign_up_sources = item["signUpSource"]
             
@@ -86,17 +93,25 @@ def extract_unique_keys(data):
                     cleaned_source = source.strip()
                     if cleaned_source:
                         sign_up_sources_set.add(cleaned_source)
-        
-    
-    
+   
+    def process_unique_ref_values(data, ref_set):
+        """
+        Extracts all unique values from 'cpg.$ref' and adds them to a given set. Only for brands.
+        """
+        for entry in data:
+            ref_value = entry.get("cpg", {}).get("$ref")  # Safely access nested key
+            if ref_value:  # Ensure value is not None or empty
+                ref_set.add(ref_value)  # Store unique values
+
     for data_point in data:
         # Process parent-level fields (direct keys in the receipt object)
         process_item(data_point, parent_keys)
         process_sign_up_sources(data_point, list_of_sign_up_sources)
+        process_unique_ref_values([data_point], list_of_brand_refs)
         
         # Find and process all lists in the current data point
         for key, value in data_point.items():
-            if isinstance(value, list):  # If the field is a list
+            if isinstance(value, list):
                 num_items = len(value)
                 total_items += num_items
                 total_data_points_with_items += 1  
@@ -111,9 +126,8 @@ def extract_unique_keys(data):
                         process_item(item, item_keys)
                         process_review_reasons_values(item, list_of_review_reasons)
 
-    return parent_keys, item_keys, total_items, total_data_points_with_items, max_items, max_data_id, list_of_review_reasons, list_of_sign_up_sources
+    return parent_keys, item_keys, total_items, total_data_points_with_items, max_items, max_data_id, list_of_review_reasons, list_of_sign_up_sources, list_of_brand_refs
 
-# Runs through the receipts and gets the rewardsReceiptStatus field. Only for receipts
 def get_rewards_receipt_status(receipts):
     """
     Extracts the rewardsReceiptStatus field from each receipt.
@@ -137,9 +151,8 @@ if __name__ == "__main__":
     parsed_data = parse_malformed_json(file_path)
 
     # Step 2: Extract unique keys and count items
-    parent_keys, item_keys, total_items, total_data_points_with_items, max_items, max_data_id, needs_fetch_review_reason, list_of_sign_up_sources = extract_unique_keys(parsed_data)
+    parent_keys, item_keys, total_items, total_data_points_with_items, max_items, max_data_id, needs_fetch_review_reason, list_of_sign_up_sources, list_of_brand_refs = extract_unique_keys(parsed_data)
     
-    # Get rewardsReceiptStatus. For receipts only.
     reward_receipt_status = get_rewards_receipt_status(parsed_data)
 
     # Step 3: Print key statistics
@@ -153,12 +166,10 @@ if __name__ == "__main__":
         print(f"🏆 Receipt with the most items: {max_items} items (Receipt ID: {max_data_id})")
         print(f"📊 Rewards Receipt Status: {reward_receipt_status}")
         
-        # Step 4: Print extracted parent-level keys
         print("\n🔍 **Extracted Parent-Level Keys & Data Types:**")
         for key, types in sorted(parent_keys.items()):
             print(f"{key}: {', '.join(types)}")
         
-        # Step 5: Print item statistics
         print("\n🔢 **Item Statistics**:")
         print(f"📦 Total individual items in rewardsReceiptItemList: {total_items}")
         print(f"📝 Number of receipts that contain rewardsReceiptItemList: {total_data_points_with_items}")
@@ -166,7 +177,6 @@ if __name__ == "__main__":
         print(f"📊 Average items per receipt (only those that contain rewardsReceiptItemList): {total_items / total_data_points_with_items if total_data_points_with_items else 0:.2f}")
         print(f"🏆 Receipt with the most items: {max_items} items (Receipt ID: {max_data_id})")
 
-        # Step 6: Print extracted rewardsReceiptItemList keys
         print("\n🔍 **Extracted rewardsReceiptItemList Keys & Data Types:**")
         for key, types in sorted(item_keys.items()):
             print(f"{key}: {', '.join(types)}")
@@ -175,6 +185,7 @@ if __name__ == "__main__":
     elif file_path == "users.json":
         print("\n📋 **Data Statistics**:")
         print(f"🧾 Total users: {len(parsed_data)}")
+        
         print("\n🔍 **Extracted Parent-Level Keys & Data Types:**")
         for key, types in sorted(parent_keys.items()):
             print(f"{key}: {', '.join(types)}")
@@ -183,6 +194,9 @@ if __name__ == "__main__":
     elif file_path == "brands.json":
         print("\n📋 **Data Statistics**:")
         print(f"🧾 Total brands: {len(parsed_data)}")
+        
         print("\n🔍 **Extracted Parent-Level Keys & Data Types:**")
         for key, types in sorted(parent_keys.items()):
             print(f"{key}: {', '.join(types)}")
+        print(f"\n📝 **Brand References:**")
+        print(list_of_brand_refs)

@@ -10,6 +10,20 @@
 | sign_up_source | ENUM      |             | Source of user sign up. Values: `Google`, `Email` |
 | state          | CHAR(2)   |             | State the user is from when signed in.            |
 
+# Brands Table
+
+| Column Name   | Data Type    | Key Type    | Description                                             |
+| ------------- | ------------ | ----------- | ------------------------------------------------------- |
+| id            | UUID         | Primary Key | uuid for the brand. This is the unique ID for the brand |
+| barcode       | VARCHAR(255) |             | Barcode of the purchased item                           |
+| brand_code    | VARCHAR(255) |             | code of brand                                           |
+| category      | VARCHAR(255) |             | category of brand                                       |
+| category_code | VARCHAR(255) |             | category code of brand                                  |
+| cpg_id        | UUID         |             | cpg id of brand                                         |
+| ref           | ENUM         |             | ref of brand. Values: `Cpgs`, `Cogs`                    |
+| name          | VARCHAR(255) |             | name of brand                                           |
+| top_brand     | BOOLEAN      |             | Is this a top brand                                     |
+
 # Receipts Table
 
 | Column Name                | Data Type    | Key Type    | Description                                                                              |
@@ -68,7 +82,7 @@
 | user_flagged_new_item                  | BOOLEAN      |             | When user flags new item                                                                  |
 | user_flagged_price                     | DECIMAL      |             | When user flags price                                                                     |
 | user_flagged_quantity                  | TINYINT      |             | When user flags quantity                                                                  |
-| brand_code                             | VARCHAR(75)  |             | code of brand                                                                             |
+| brand_code                             | VARCHAR(255) |             | code of brand                                                                             |
 | competitor_rewards_group               | TEXT         |             | competitor reward group                                                                   |
 | competitive_product                    | BOOLEAN      |             | Is it a competitive product                                                               |
 | discounted_item_price                  | DECIMAL      |             | Price of discounted Item                                                                  |
