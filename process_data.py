@@ -52,6 +52,7 @@ def extract_unique_keys(data):
     list_of_review_reasons = set()
     list_of_sign_up_sources = set()
     list_of_brand_refs = set() 
+    list_of_user_roles = set()
 
     def process_item(item, key_dict, prefix=""):
         """
@@ -79,6 +80,21 @@ def extract_unique_keys(data):
                     if cleaned_reason:
                         review_reasons_set.add(cleaned_reason)               
 
+    def process_user_roles(item, user_roles_set):
+        """ 
+        Extracts all unique values from 'role' and adds them to a given set. Only for users.
+        """
+        if "role" in item:
+            user_roles = item["role"]
+            
+            if isinstance(user_roles, list):
+                user_roles_set.update(filter(None, user_roles))
+            elif isinstance(user_roles, str):
+                for role in user_roles.split(","):
+                    cleaned_role = role.strip()
+                    if cleaned_role:
+                        user_roles_set.add(cleaned_role)
+    
     def process_sign_up_sources(item, sign_up_sources_set):
         """ 
         Extracts all unique values from 'signUpSource' and adds them to a given set. Only for users.
@@ -106,6 +122,7 @@ def extract_unique_keys(data):
     for data_point in data:
         # Process parent-level fields (direct keys in the receipt object)
         process_item(data_point, parent_keys)
+        process_user_roles(data_point, list_of_user_roles)
         process_sign_up_sources(data_point, list_of_sign_up_sources)
         process_unique_ref_values([data_point], list_of_brand_refs)
         
@@ -126,7 +143,7 @@ def extract_unique_keys(data):
                         process_item(item, item_keys)
                         process_review_reasons_values(item, list_of_review_reasons)
 
-    return parent_keys, item_keys, total_items, total_data_points_with_items, max_items, max_data_id, list_of_review_reasons, list_of_sign_up_sources, list_of_brand_refs
+    return parent_keys, item_keys, total_items, total_data_points_with_items, max_items, max_data_id, list_of_review_reasons, list_of_user_roles, list_of_sign_up_sources, list_of_brand_refs
 
 def get_rewards_receipt_status(receipts):
     """
@@ -151,7 +168,7 @@ if __name__ == "__main__":
     parsed_data = parse_malformed_json(file_path)
 
     # Step 2: Extract unique keys and count items
-    parent_keys, item_keys, total_items, total_data_points_with_items, max_items, max_data_id, needs_fetch_review_reason, list_of_sign_up_sources, list_of_brand_refs = extract_unique_keys(parsed_data)
+    parent_keys, item_keys, total_items, total_data_points_with_items, max_items, max_data_id, needs_fetch_review_reason, list_of_user_roles, list_of_sign_up_sources, list_of_brand_refs = extract_unique_keys(parsed_data)
     
     # Get rewardsReceiptStatus (for receipts only)
     reward_receipt_status = get_rewards_receipt_status(parsed_data)
@@ -175,6 +192,7 @@ if __name__ == "__main__":
         "users.json": {
             "title": "User Data Statistics",
             "total": total_data_points,
+            "roles": f"📝 User Roles:\n{json.dumps(list(list_of_user_roles), indent=2)}",
             "extra": f"📝 Sign Up Sources:\n{json.dumps(list(list_of_sign_up_sources), indent=2)}",
         },
         "brands.json": {
@@ -200,6 +218,9 @@ if __name__ == "__main__":
         print(f"\n🔍 **Extracted Parent-Level Keys & Data Types:**")
         for key, types in sorted(parent_keys.items()):
             print(f"{key}: {', '.join(types)}")
+        
+        if "roles" in stats:
+            print(f"\n{stats['roles']}")
 
         if "extra" in stats:
             print(f"\n{stats['extra']}")

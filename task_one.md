@@ -6,7 +6,7 @@
 | active         | BOOLEAN   |             | Is the user active on the app                     |
 | create_date    | TIMESTAMP |             | The date that the user was created                |
 | last_login     | TIMESTAMP |             | The date that the user last logged into the app   |
-| role           | TIMESTAMP |             | The date that the user last logged into the app   |
+| role           | ENUM      |             | Role of users. Values: `consumer`, `fetch-staff`  |
 | sign_up_source | ENUM      |             | Source of user sign up. Values: `Google`, `Email` |
 | state          | CHAR(2)   |             | State the user is from when signed in.            |
 
