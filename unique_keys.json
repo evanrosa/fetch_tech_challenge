@@ -1,0 +1,104 @@
+{
+  "barcode": [
+    "str"
+  ],
+  "description": [
+    "str"
+  ],
+  "finalPrice": [
+    "str"
+  ],
+  "itemPrice": [
+    "str"
+  ],
+  "needsFetchReview": [
+    "bool"
+  ],
+  "partnerItemId": [
+    "str"
+  ],
+  "preventTargetGapPoints": [
+    "bool"
+  ],
+  "quantityPurchased": [
+    "int"
+  ],
+  "userFlaggedBarcode": [
+    "str"
+  ],
+  "userFlaggedNewItem": [
+    "bool"
+  ],
+  "userFlaggedPrice": [
+    "str"
+  ],
+  "userFlaggedQuantity": [
+    "int"
+  ],
+  "needsFetchReviewReason": [
+    "str"
+  ],
+  "pointsNotAwardedReason": [
+    "str"
+  ],
+  "pointsPayerId": [
+    "str"
+  ],
+  "rewardsGroup": [
+    "str"
+  ],
+  "rewardsProductPartnerId": [
+    "str"
+  ],
+  "userFlaggedDescription": [
+    "str"
+  ],
+  "originalMetaBriteBarcode": [
+    "str"
+  ],
+  "originalMetaBriteDescription": [
+    "str"
+  ],
+  "brandCode": [
+    "str"
+  ],
+  "competitorRewardsGroup": [
+    "str"
+  ],
+  "discountedItemPrice": [
+    "str"
+  ],
+  "originalReceiptItemText": [
+    "str"
+  ],
+  "itemNumber": [
+    "str"
+  ],
+  "originalMetaBriteQuantityPurchased": [
+    "int"
+  ],
+  "pointsEarned": [
+    "str"
+  ],
+  "targetPrice": [
+    "str"
+  ],
+  "competitiveProduct": [
+    "bool"
+  ],
+  "originalFinalPrice": [
+    "str"
+  ],
+  "originalMetaBriteItemPrice": [
+    "str"
+  ],
+  "deleted": [
+    "bool"
+  ],
+  "priceAfterCoupon": [
+    "str"
+  ],
+  "metabriteCampaignId": [
+    "str"
+  ]
+}
