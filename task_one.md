@@ -149,4 +149,4 @@
 
 ---
 
-![Alt text](diagram.jpg)
+![ER Diagram](diagram.jpg)
