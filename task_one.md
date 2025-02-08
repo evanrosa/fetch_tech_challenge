@@ -149,4 +149,6 @@
 
 ---
 
+# ER Diagram
+
 ![ER Diagram](diagram.jpg)
