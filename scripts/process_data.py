@@ -1,6 +1,7 @@
 from collections import defaultdict
 import json
 import re
+import os
 
 def parse_malformed_json(file_path):
     """
@@ -36,6 +37,21 @@ def parse_malformed_json(file_path):
     print(f"⚠️ Skipped {skipped_entries} malformed entries (logged above)")
 
     return data
+
+def save_cleaned_data_to_json(data, output_dir, output_filename):
+    """
+    Saves cleaned data to a JSON file.
+    """
+    
+    os.makedirs(output_dir, exist_ok=True)
+    
+    output_file_path = os.path.join(output_dir, output_filename)
+    
+    try:
+        with open(output_file_path, 'w', encoding='utf-8') as file:
+            json.dump(data, file, indent=4, ensure_ascii=False)
+    except Exception as e:
+        print(f"❌ An error occurred while saving the data: {e}")
 
 def extract_unique_keys(data):
     """
@@ -161,11 +177,12 @@ def get_rewards_receipt_status(receipts):
 
 # --- Main Execution ---
 if __name__ == "__main__":
-    # 📂 Define the file path (Change this as needed)
-    file_path = "users.json"
+    # Define the file path (Change this as needed)
+    file_dir = "data"
+    file_path = "brands.json"
 
     # Step 1: Parse JSON data
-    parsed_data = parse_malformed_json(file_path)
+    parsed_data = parse_malformed_json(f"{file_dir}/{file_path}")
 
     # Step 2: Extract unique keys and count items
     parent_keys, item_keys, total_items, total_data_points_with_items, max_items, max_data_id, needs_fetch_review_reason, list_of_user_roles, list_of_sign_up_sources, list_of_brand_refs = extract_unique_keys(parsed_data)
@@ -173,7 +190,7 @@ if __name__ == "__main__":
     # Get rewardsReceiptStatus (for receipts only)
     reward_receipt_status = get_rewards_receipt_status(parsed_data)
 
-    # 🔍 Common Statistics
+    # Common Statistics
     total_data_points = len(parsed_data)
 
     # **Dictionary-based dispatch pattern for cleaner conditional logic**
@@ -224,3 +241,6 @@ if __name__ == "__main__":
 
         if "extra" in stats:
             print(f"\n{stats['extra']}")
+
+    output_file = f"cleaned_{file_path}"
+    save_cleaned_data_to_json(parsed_data, "data/cleaned",output_file)

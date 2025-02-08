@@ -151,4 +151,4 @@
 
 # ER Diagram
 
-![ER Diagram](diagram.jpg)
+![ER Diagram](images/diagram.jpg)
