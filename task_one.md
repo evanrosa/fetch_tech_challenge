@@ -22,7 +22,7 @@
 
 | Column Name                | Data Type    | Key Type    | Description                                                                              |
 | -------------------------- | ------------ | ----------- | ---------------------------------------------------------------------------------------- |
-| id                         | UUID         | Primary Key | UUID for this receipt                                                                    |
+| receipt_id                 | UUID         | Primary Key | UUID for this receipt                                                                    |
 | user_id                    | UUID         | Foreign Key | UUID ID of the user who submitted the receipt. Links to `users.id`                       |
 | purchase_date              | TIMESTAMP    |             | The date of the purchase                                                                 |
 | date_scanned               | TIMESTAMP    |             | Date that the user scanned their receipt                                                 |
@@ -61,7 +61,7 @@
 
 | Column Name                            | Data Type    | Key Type    | Description                                                                               |
 | -------------------------------------- | ------------ | ----------- | ----------------------------------------------------------------------------------------- |
-| id                                     | UUID         | Primary Key | uuid unique identifier for each receipt                                                   |
+| reciept_items_id                       | UUID         | Primary Key | uuid unique identifier for each receipt                                                   |
 | receipt_id                             | UUID         | Foreign Key | Links to receipts in receipt table                                                        |
 | brand_code                             | VARCHAR(255) | Foreign Key | Code of brand. References brand code in brands table.                                     |
 | barcode                                | VARCHAR(255) | Foreign Key | Barcode of the purchased item. References barcode in brand table.                         |
@@ -120,7 +120,7 @@
 
 | Column Name   | Data Type    | Key Type    | Description                                              |
 | ------------- | ------------ | ----------- | -------------------------------------------------------- |
-| id            | UUID         | Primary Key | UUID for the brand. This is the unique ID for the brand  |
+| brand_id      | UUID         | Primary Key | UUID for the brand. This is the unique ID for the brand  |
 | brand_code    | VARCHAR(255) |             | Code of brand                                            |
 | name          | VARCHAR(255) |             | Name of brand                                            |
 | category      | VARCHAR(255) |             | Category of brand                                        |

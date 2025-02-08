@@ -2,6 +2,7 @@ from collections import defaultdict
 import json
 import re
 import os
+import pandas as pd
 
 def parse_malformed_json(file_path):
     """
@@ -38,9 +39,9 @@ def parse_malformed_json(file_path):
 
     return data
 
-def save_cleaned_data_to_json(data, output_dir, output_filename):
+def save_cleaned_data_to_csv(data, output_dir, output_filename):
     """
-    Saves cleaned data to a JSON file.
+    Saves cleaned data to a CSV file.
     """
     
     os.makedirs(output_dir, exist_ok=True)
@@ -48,10 +49,87 @@ def save_cleaned_data_to_json(data, output_dir, output_filename):
     output_file_path = os.path.join(output_dir, output_filename)
     
     try:
-        with open(output_file_path, 'w', encoding='utf-8') as file:
-            json.dump(data, file, indent=4, ensure_ascii=False)
+        df = pd.json_normalize(data) 
+        
+        df.to_csv(output_file_path, index=False, encoding='utf-8')
+        print(f"✅ Successfully saved cleaned data to: {output_file_path}")
     except Exception as e:
         print(f"❌ An error occurred while saving the data: {e}")
+
+def extract_receipts_and_items(data):
+    """
+    Extracts receipts and their respective items into separate lists for CSV conversion.
+    """
+    receipts_data = []
+    items_data = []
+
+    for receipt in data:
+        receipt_id = receipt.get("_id", {}).get("$oid", None)
+        user_id = receipt.get("userId", None)
+
+        # Extract parent receipt fields
+        receipt_record = {
+            "receipt_id": receipt_id,
+            "user_id": user_id,
+            "purchase_date": receipt.get("purchaseDate", {}).get("$date", None),
+            "date_scanned": receipt.get("dateScanned", {}).get("$date", None),
+            "create_date": receipt.get("createDate", {}).get("$date", None),
+            "finished_date": receipt.get("finishedDate", {}).get("$date", None),
+            "modify_date": receipt.get("modifyDate", {}).get("$date", None),
+            "rewards_receipt_status": receipt.get("rewardsReceiptStatus", ""),
+            "bonus_points_earned": receipt.get("bonusPointsEarned", 0),
+            "points_awarded_date": receipt.get("pointsAwardedDate", {}).get("$date", None),
+            "points_earned": receipt.get("pointsEarned", 0),
+            "purchased_item_count": receipt.get("purchasedItemCount", 0),
+            "total_spent": receipt.get("totalSpent", 0),
+            "bonus_points_earned_reason": receipt.get("bonusPointsEarnedReason", ""),            
+        }
+
+        receipts_data.append(receipt_record)
+
+        # Extract items within rewardsReceiptItemList
+        items = receipt.get("rewardsReceiptItemList", [])
+        for item in items:
+            item_record = {
+                "receipt_id": receipt_id,  # Maintain relationship to the receipt
+                "brand_code": item.get("brandCode", ""),
+                "barcode": item.get("barcode", ""),
+                "quantity_purchased": item.get("quantityPurchased", 0),
+                "final_price": item.get("finalPrice", 0),
+                "item_price": item.get("itemPrice", 0),
+                "price_after_coupon": item.get("priceAfterCoupon", 0),
+                "points_earned": item.get("pointsEarned", 0),
+                "points_payer_id": item.get("pointsPayerId", ""),
+                "needs_fetch_review": item.get("needsFetchReview", False),
+                "needs_fetch_review_reason": item.get("needsFetchReviewReason", ""),
+                "description": item.get("description", ""),
+                "original_receipt_item_text": item.get("originalReceiptItemText", ""),
+                "metabrite_campaign_id": item.get("metabriteCampaignId", ""),
+                "original_meta_brite_barcode": item.get("originalMetaBriteBarcode", ""),
+                "original_meta_brite_description": item.get("originalMetaBriteDescription", ""),                
+                "original_final_price": item.get("originalFinalPrice", 0),  
+                "original_meta_brite_item_price": item.get("originalMetaBriteItemPrice", 0), 
+                "original_meta_brite_quantity_purchased": item.get("originalMetaBriteQuantityPurchased", 0), 
+                "user_flagged_barcode": item.get("userFlaggedBarcode", ""), 
+                "user_flagged_description": item.get("userFlaggedDescription", ""), 
+                "user_flagged_new_item": item.get("userFlaggedNewItem", False), 
+                "user_flagged_price": item.get("userFlaggedPrice", 0),
+                "user_flagged_quantity": item.get("userFlaggedQuantity", 0),
+                "item_number": item.get("itemNumber", ""),
+                "partner_item_id": item.get("partnerItemId", ""),
+                "points_not_awarded_reason": item.get("pointsNotAwardedReason", ""),
+                "rewards_group": item.get("rewardsGroup", ""),
+                "rewards_product_partner_id": item.get("rewardsProductPartnerId", ""),
+                "target_price": item.get("targetPrice", 0),
+                "prevent_target_gap_points": item.get("preventTargetGapPoints", False),
+                "competitor_rewards_group": item.get("competitorRewardsGroup", ""),
+                "competitive_product": item.get("competitiveProduct", 0),
+                "discounted_item_price": item.get("discountedItemPrice", 0),
+                "deleted": item.get("deleted", False),
+            }
+            items_data.append(item_record)
+
+    return receipts_data, items_data
 
 def extract_unique_keys(data):
     """
@@ -174,12 +252,11 @@ def get_rewards_receipt_status(receipts):
 
     return status_counts
 
-
 # --- Main Execution ---
 if __name__ == "__main__":
     # Define the file path (Change this as needed)
     file_dir = "data"
-    file_path = "brands.json"
+    file_path = "receipts.json"
 
     # Step 1: Parse JSON data
     parsed_data = parse_malformed_json(f"{file_dir}/{file_path}")
@@ -241,6 +318,9 @@ if __name__ == "__main__":
 
         if "extra" in stats:
             print(f"\n{stats['extra']}")
+            
+    output_dir = "data/cleaned"
 
-    output_file = f"cleaned_{file_path}"
-    save_cleaned_data_to_json(parsed_data, "data/cleaned",output_file)
+    receipts_data, items_data = extract_receipts_and_items(parsed_data)
+    save_cleaned_data_to_csv(receipts_data, output_dir, "cleaned_receipts.csv")
+    save_cleaned_data_to_csv(items_data, output_dir, "cleaned_receipt_items.csv")
