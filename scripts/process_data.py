@@ -39,32 +39,30 @@ def parse_malformed_json(file_path):
 
     return data
 
-def save_cleaned_data_to_csv(data, output_dir, output_filename):
+def save_cleaned_data_to_json(data, output_dir, output_filename):
     """
-    Saves cleaned data to a CSV file.
+    Saves cleaned data to a JSON file.
     """
     
-    os.makedirs(output_dir, exist_ok=True)
-    
+    os.makedirs(output_dir, exist_ok=True)  # Ensure directory exists
     output_file_path = os.path.join(output_dir, output_filename)
     
     try:
-        df = pd.json_normalize(data) 
-        
-        df.to_csv(output_file_path, index=False, encoding='utf-8')
+        with open(output_file_path, 'w', encoding='utf-8') as file:
+            json.dump(data, file, indent=4, ensure_ascii=False)  # Pretty-print JSON
         print(f"✅ Successfully saved cleaned data to: {output_file_path}")
     except Exception as e:
         print(f"❌ An error occurred while saving the data: {e}")
 
 def extract_receipts_and_items(data):
     """
-    Extracts receipts and their respective items into separate lists for CSV conversion.
+    Extracts receipts and their respective items into separate JSON structures.
     """
     receipts_data = []
     items_data = []
 
     for receipt in data:
-        receipt_id = receipt.get("_id", {}).get("$oid", None)
+        receipt_id = receipt.get("_id", {}).get("$oid", None)  # Extract receipt UUID
         user_id = receipt.get("userId", None)
 
         # Extract parent receipt fields
@@ -82,7 +80,7 @@ def extract_receipts_and_items(data):
             "points_earned": receipt.get("pointsEarned", 0),
             "purchased_item_count": receipt.get("purchasedItemCount", 0),
             "total_spent": receipt.get("totalSpent", 0),
-            "bonus_points_earned_reason": receipt.get("bonusPointsEarnedReason", ""),            
+            "bonus_points_earned_reason": receipt.get("bonusPointsEarnedReason", ""),
         }
 
         receipts_data.append(receipt_record)
@@ -106,13 +104,13 @@ def extract_receipts_and_items(data):
                 "original_receipt_item_text": item.get("originalReceiptItemText", ""),
                 "metabrite_campaign_id": item.get("metabriteCampaignId", ""),
                 "original_meta_brite_barcode": item.get("originalMetaBriteBarcode", ""),
-                "original_meta_brite_description": item.get("originalMetaBriteDescription", ""),                
-                "original_final_price": item.get("originalFinalPrice", 0),  
-                "original_meta_brite_item_price": item.get("originalMetaBriteItemPrice", 0), 
-                "original_meta_brite_quantity_purchased": item.get("originalMetaBriteQuantityPurchased", 0), 
-                "user_flagged_barcode": item.get("userFlaggedBarcode", ""), 
-                "user_flagged_description": item.get("userFlaggedDescription", ""), 
-                "user_flagged_new_item": item.get("userFlaggedNewItem", False), 
+                "original_meta_brite_description": item.get("originalMetaBriteDescription", ""),
+                "original_final_price": item.get("originalFinalPrice", 0),
+                "original_meta_brite_item_price": item.get("originalMetaBriteItemPrice", 0),
+                "original_meta_brite_quantity_purchased": item.get("originalMetaBriteQuantityPurchased", 0),
+                "user_flagged_barcode": item.get("userFlaggedBarcode", ""),
+                "user_flagged_description": item.get("userFlaggedDescription", ""),
+                "user_flagged_new_item": item.get("userFlaggedNewItem", False),
                 "user_flagged_price": item.get("userFlaggedPrice", 0),
                 "user_flagged_quantity": item.get("userFlaggedQuantity", 0),
                 "item_number": item.get("itemNumber", ""),
@@ -256,7 +254,7 @@ def get_rewards_receipt_status(receipts):
 if __name__ == "__main__":
     # Define the file path (Change this as needed)
     file_dir = "data"
-    file_path = "receipts.json"
+    file_path = "brands.json"
 
     # Step 1: Parse JSON data
     parsed_data = parse_malformed_json(f"{file_dir}/{file_path}")
@@ -320,7 +318,15 @@ if __name__ == "__main__":
             print(f"\n{stats['extra']}")
             
     output_dir = "data/cleaned"
-
-    receipts_data, items_data = extract_receipts_and_items(parsed_data)
-    save_cleaned_data_to_csv(receipts_data, output_dir, "cleaned_receipts.csv")
-    save_cleaned_data_to_csv(items_data, output_dir, "cleaned_receipt_items.csv")
+    
+    if file_path == "receipts.json":
+        receipts_data, items_data = extract_receipts_and_items(parsed_data)
+        save_cleaned_data_to_json(receipts_data, output_dir, "cleaned_receipts.json")
+        save_cleaned_data_to_json(items_data, output_dir, "cleaned_receipt_items.json")
+    
+    elif file_path == "users.json" or file_path == "brands.json":
+        output_file = f"cleaned_{file_path}"
+        save_cleaned_data_to_json(parsed_data, "data/cleaned",output_file)
+    
+    else:
+        print("❌ No cleaning process defined for this file type. Skipping CSV conversion.")
