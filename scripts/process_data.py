@@ -2,7 +2,6 @@ from collections import defaultdict
 import json
 import re
 import os
-import pandas as pd
 
 def parse_malformed_json(file_path):
     """
@@ -39,6 +38,25 @@ def parse_malformed_json(file_path):
 
     return data
 
+def camel_to_snake(name: str) -> str:
+    """
+    Converts a camelCase or CamelCase string to snake_case.
+    """
+    s1 = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", name)
+    return re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
+
+def convert_keys_to_snake_case(data):
+    """
+    Recursively converts dictionary keys to snake_case.
+    """
+    if isinstance(data, dict):
+        return {camel_to_snake(key): convert_keys_to_snake_case(value)
+                for key, value in data.items()}
+    elif isinstance(data, list):
+        return [convert_keys_to_snake_case(item) for item in data]
+    else:
+        return data
+
 def save_cleaned_data_to_json(data, output_dir, output_filename):
     """
     Saves cleaned data to a JSON file.
@@ -69,60 +87,60 @@ def extract_receipts_and_items(data):
         receipt_record = {
             "receipt_id": receipt_id,
             "user_id": user_id,
-            "purchase_date": receipt.get("purchaseDate", {}).get("$date", None),
-            "date_scanned": receipt.get("dateScanned", {}).get("$date", None),
-            "create_date": receipt.get("createDate", {}).get("$date", None),
-            "finished_date": receipt.get("finishedDate", {}).get("$date", None),
-            "modify_date": receipt.get("modifyDate", {}).get("$date", None),
-            "rewards_receipt_status": receipt.get("rewardsReceiptStatus", ""),
-            "bonus_points_earned": receipt.get("bonusPointsEarned", 0),
-            "points_awarded_date": receipt.get("pointsAwardedDate", {}).get("$date", None),
-            "points_earned": receipt.get("pointsEarned", 0),
-            "purchased_item_count": receipt.get("purchasedItemCount", 0),
-            "total_spent": receipt.get("totalSpent", 0),
-            "bonus_points_earned_reason": receipt.get("bonusPointsEarnedReason", ""),
+            "purchase_date": receipt.get("purchase_date", {}).get("$date", None),
+            "date_scanned": receipt.get("date_scanned", {}).get("$date", None),
+            "create_date": receipt.get("create_date", {}).get("$date", None),
+            "finished_date": receipt.get("finished_date", {}).get("$date", None),
+            "modify_date": receipt.get("modify_date", {}).get("$date", None),
+            "rewards_receipt_status": receipt.get("rewards_receipt_status", ""),
+            "bonus_points_earned": receipt.get("bonus_points_earned", 0),
+            "points_awarded_date": receipt.get("points_awarded_date", {}).get("$date", None),
+            "points_earned": receipt.get("points_earned", 0),
+            "purchased_item_count": receipt.get("purchased_item_count", 0),
+            "total_spent": receipt.get("total_spent", 0),
+            "bonus_points_earned_reason": receipt.get("bonus_points_earned_reason", ""),
         }
 
         receipts_data.append(receipt_record)
 
         # Extract items within rewardsReceiptItemList
-        items = receipt.get("rewardsReceiptItemList", [])
+        items = receipt.get("rewards_receipt_item_list", [])
         for item in items:
             item_record = {
                 "receipt_id": receipt_id,  # Maintain relationship to the receipt
-                "brand_code": item.get("brandCode", ""),
+                "brand_code": item.get("brand_code", ""),
                 "barcode": item.get("barcode", ""),
-                "quantity_purchased": item.get("quantityPurchased", 0),
-                "final_price": item.get("finalPrice", 0),
-                "item_price": item.get("itemPrice", 0),
-                "price_after_coupon": item.get("priceAfterCoupon", 0),
-                "points_earned": item.get("pointsEarned", 0),
-                "points_payer_id": item.get("pointsPayerId", ""),
-                "needs_fetch_review": item.get("needsFetchReview", False),
-                "needs_fetch_review_reason": item.get("needsFetchReviewReason", ""),
+                "quantity_purchased": item.get("quantity_purchased", 0),
+                "final_price": item.get("final_price", 0),
+                "item_price": item.get("item_price", 0),
+                "price_after_coupon": item.get("price_after_coupon", 0),
+                "points_earned": item.get("points_earned", 0),
+                "points_payer_id": item.get("points_payer_id", ""),
+                "needs_fetch_review": item.get("needs_fetch_review", False),
+                "needs_fetch_review_reason": item.get("needs_fetch_review_reason", ""),
                 "description": item.get("description", ""),
-                "original_receipt_item_text": item.get("originalReceiptItemText", ""),
-                "metabrite_campaign_id": item.get("metabriteCampaignId", ""),
-                "original_meta_brite_barcode": item.get("originalMetaBriteBarcode", ""),
-                "original_meta_brite_description": item.get("originalMetaBriteDescription", ""),
-                "original_final_price": item.get("originalFinalPrice", 0),
-                "original_meta_brite_item_price": item.get("originalMetaBriteItemPrice", 0),
-                "original_meta_brite_quantity_purchased": item.get("originalMetaBriteQuantityPurchased", 0),
-                "user_flagged_barcode": item.get("userFlaggedBarcode", ""),
-                "user_flagged_description": item.get("userFlaggedDescription", ""),
-                "user_flagged_new_item": item.get("userFlaggedNewItem", False),
-                "user_flagged_price": item.get("userFlaggedPrice", 0),
-                "user_flagged_quantity": item.get("userFlaggedQuantity", 0),
-                "item_number": item.get("itemNumber", ""),
-                "partner_item_id": item.get("partnerItemId", ""),
-                "points_not_awarded_reason": item.get("pointsNotAwardedReason", ""),
-                "rewards_group": item.get("rewardsGroup", ""),
-                "rewards_product_partner_id": item.get("rewardsProductPartnerId", ""),
-                "target_price": item.get("targetPrice", 0),
-                "prevent_target_gap_points": item.get("preventTargetGapPoints", False),
-                "competitor_rewards_group": item.get("competitorRewardsGroup", ""),
-                "competitive_product": item.get("competitiveProduct", 0),
-                "discounted_item_price": item.get("discountedItemPrice", 0),
+                "original_receipt_item_text": item.get("original_receipt_item_text", ""),
+                "metabrite_campaign_id": item.get("metabrite_campaign_id", ""),
+                "original_meta_brite_barcode": item.get("original_meta_brite_barcode", ""),
+                "original_meta_brite_description": item.get("original_meta_brite_description", ""),
+                "original_final_price": item.get("original_final_price", 0),
+                "original_meta_brite_item_price": item.get("original_meta_brite_item_price", 0),
+                "original_meta_brite_quantity_purchased": item.get("original_meta_brite_quantity_purchased", 0),
+                "user_flagged_barcode": item.get("user_flagged_barcode", ""),
+                "user_flagged_description": item.get("user_flagged_description", ""),
+                "user_flagged_new_item": item.get("user_flagged_new_item", False),
+                "user_flagged_price": item.get("user_flagged_price", 0),
+                "user_flagged_quantity": item.get("user_flagged_quantity", 0),
+                "item_number": item.get("item_number", ""),
+                "partner_item_id": item.get("partner_item_id", ""),
+                "points_not_awarded_reason": item.get("points_not_awarded_reason", ""),
+                "rewards_group": item.get("rewards_group", ""),
+                "rewards_product_partner_id": item.get("rewards_product_partner_id", ""),
+                "target_price": item.get("target_price", 0),
+                "prevent_target_gap_points": item.get("prevent_target_gap_points", False),
+                "competitor_rewards_group": item.get("competitor_rewards_group", ""),
+                "competitive_product": item.get("competitive_product", 0),
+                "discounted_item_price": item.get("discounted_item_price", 0),
                 "deleted": item.get("deleted", False),
             }
             items_data.append(item_record)
@@ -259,6 +277,8 @@ if __name__ == "__main__":
     # Step 1: Parse JSON data
     parsed_data = parse_malformed_json(f"{file_dir}/{file_path}")
 
+    parsed_data = convert_keys_to_snake_case(parsed_data)
+
     # Step 2: Extract unique keys and count items
     parent_keys, item_keys, total_items, total_data_points_with_items, max_items, max_data_id, needs_fetch_review_reason, list_of_user_roles, list_of_sign_up_sources, list_of_brand_refs = extract_unique_keys(parsed_data)
     
@@ -318,15 +338,11 @@ if __name__ == "__main__":
             print(f"\n{stats['extra']}")
             
     output_dir = "data/cleaned"
-    
+
     if file_path == "receipts.json":
         receipts_data, items_data = extract_receipts_and_items(parsed_data)
         save_cleaned_data_to_json(receipts_data, output_dir, "cleaned_receipts.json")
         save_cleaned_data_to_json(items_data, output_dir, "cleaned_receipt_items.json")
-    
-    elif file_path == "users.json" or file_path == "brands.json":
-        output_file = f"cleaned_{file_path}"
-        save_cleaned_data_to_json(parsed_data, "data/cleaned",output_file)
-    
     else:
-        print("❌ No cleaning process defined for this file type. Skipping CSV conversion.")
+        output_file = f"cleaned_{file_path}"
+        save_cleaned_data_to_json(parsed_data, "data/cleaned", output_file)

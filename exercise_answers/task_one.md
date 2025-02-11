@@ -60,8 +60,8 @@
 # Receipt Item Table
 
 | Column Name                            | Data Type    | Key Type    | Description                                                                               |
-| -------------------------------------- |--------------| ----------- | ----------------------------------------------------------------------------------------- |
-| reciept_items_id                       | UUID         | Primary Key | uuid unique identifier for each receipt                                                   |
+|----------------------------------------|--------------| ----------- | ----------------------------------------------------------------------------------------- |
+| receipt_items_id                       | UUID         | Primary Key | uuid unique identifier for each receipt                                                   |
 | receipt_id                             | UUID         | Foreign Key | Links to receipts in receipt table                                                        |
 | brand_code                             | VARCHAR(255) | Foreign Key | Code of brand. References brand code in brands table.                                     |
 | barcode                                | VARCHAR(255) | Foreign Key | Barcode of the purchased item. References barcode in brand table.                         |
