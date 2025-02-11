@@ -60,12 +60,12 @@
 # Receipt Item Table
 
 | Column Name                            | Data Type    | Key Type    | Description                                                                               |
-| -------------------------------------- | ------------ | ----------- | ----------------------------------------------------------------------------------------- |
+| -------------------------------------- |--------------| ----------- | ----------------------------------------------------------------------------------------- |
 | reciept_items_id                       | UUID         | Primary Key | uuid unique identifier for each receipt                                                   |
 | receipt_id                             | UUID         | Foreign Key | Links to receipts in receipt table                                                        |
 | brand_code                             | VARCHAR(255) | Foreign Key | Code of brand. References brand code in brands table.                                     |
 | barcode                                | VARCHAR(255) | Foreign Key | Barcode of the purchased item. References barcode in brand table.                         |
-| quantity_purchased                     | TINYINT      |             | Quantity purchased                                                                        |
+| quantity_purchased                     | SMALLINT     |             | Quantity purchased                                                                        |
 | final_price                            | DECIMAL      |             | Final price of the item after discounts                                                   |
 | item_price                             | DECIMAL      |             | Original item price                                                                       |
 | price_after_coupon                     | DECIMAL      |             | Price after applying coupon                                                               |
@@ -85,13 +85,13 @@
 | user_flagged_description               | TEXT         |             | Description why it is flagged                                                             |
 | user_flagged_new_item                  | BOOLEAN      |             | When user flags new item                                                                  |
 | user_flagged_price                     | DECIMAL      |             | When user flags price                                                                     |
-| user_flagged_quantity                  | TINYINT      |             | When user flags quantity                                                                  |
+| user_flagged_quantity                  | SMALLINT     |             | When user flags quantity                                                                  |
 | item_number                            | VARCHAR(125) |             | Item number of product                                                                    |
 | partner_item_id                        | VARCHAR(50)  |             | Partner's item ID for reference                                                           |
 | points_not_awarded_reason              | TEXT         |             | Reason points were not rewarded                                                           |
 | rewards_group                          | TEXT         |             | Reward group description                                                                  |
 | rewards_product_partner_id             | VARCHAR(255) |             | ID of rewards product partner                                                             |
-| target_price                           | TINYTEXT     |             | Target price                                                                              |
+| target_price                           | DECIMAL      |             | Target price                                                                              |
 | prevent_target_gap_points              | BOOLEAN      |             | Flag to prevent awarding target gap points                                                |
 | competitor_rewards_group               | TEXT         |             | Competitor reward group                                                                   |
 | competitive_product                    | BOOLEAN      |             | Is it a competitive product                                                               |
@@ -118,18 +118,18 @@
 
 # Brands Table
 
-| Column Name   | Data Type    | Key Type    | Description                                              |
-| ------------- | ------------ | ----------- | -------------------------------------------------------- |
-| brand_id      | UUID         | Primary Key | UUID for the brand. This is the unique ID for the brand  |
-| brand_code    | VARCHAR(255) | UNIQUE      | Code of brand                                            |
-| name          | VARCHAR(255) |             | Name of brand                                            |
-| category      | VARCHAR(255) |             | Category of brand                                        |
-| category_code | VARCHAR(255) |             | Category code of brand                                   |
-| barcode       | VARCHAR(255) | UNIQUE      | Barcode of the purchased item                            |
-| cpg_id        | UUID         |             | ID to possible CPG table.                                |
-| ref           | ENUM         |             | Ref of brand. Values: `Cpgs`, `Cogs`                     |
-| created_date  | TIMESTAMP    |             | Date when brand was added (default to current timestamp) |
-| top_brand     | BOOLEAN      |             | Boolean flag indicating if this is a top brand           |
+| Column Name   | Data Type    | Key Type    | Description                                                                                           |
+| ------------- | ------------ | ----------- |-------------------------------------------------------------------------------------------------------|
+| brand_id      | UUID         | Primary Key | UUID for the brand. This is the unique ID for the brand                                               |
+| brand_code    | VARCHAR(255) | UNIQUE      | Code of brand                                                                                         |
+| name          | VARCHAR(255) |             | Name of brand                                                                                         |
+| category      | VARCHAR(255) |             | Category of brand                                                                                     |
+| category_code | VARCHAR(255) |             | Category code of brand                                                                                |
+| barcode       | VARCHAR(255) | UNIQUE      | Barcode of the purchased item                                                                         |
+| cpg_id        | UUID         |             | ID to possible CPG table.                                                                             |
+| ref           | ENUM         |             | Ref of brand. Values: `Cpgs`, `Cogs`                                                                  |
+| created_date  | TIMESTAMP    |             | Date when brand was added (default to current timestamp). This is new and not in the orginal dataset. |
+| top_brand     | BOOLEAN      |             | Boolean flag indicating if this is a top brand                                                        |
 
 ---
 
