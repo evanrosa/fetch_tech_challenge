@@ -1,16 +1,19 @@
 -- Query 1: Find the top 5 brands by distinct receipts scanned in the most recent full month.
 WITH recent_month AS (
-  SELECT date_trunc('month', current_date) - interval '1 month' AS start_date,
-         date_trunc('month', current_date) AS end_date
+  SELECT
+    DATE( MAX("date_scanned")) AS start_date,
+    DATE( MAX("date_scanned")) + INTERVAL '1 month' AS end_date
+  FROM receipts
 )
-SELECT b.name AS brand_name,
-       COUNT(DISTINCT r.receipt_id) AS receipt_count
+SELECT
+  b.name AS brand_name,
+  COUNT(DISTINCT r.receipt_id) AS receipt_count
 FROM receipts r
 JOIN receipt_items ri ON r.receipt_id = ri.receipt_id
 JOIN brands b ON ri.brand_code = b.brand_code
 JOIN recent_month rm
-  ON r.date_scanned >= rm.start_date
- AND r.date_scanned < rm.end_date
+    ON DATE(r.date_scanned) >= rm.start_date
+    AND DATE(r.date_scanned) < rm.end_date
 GROUP BY b.name
 ORDER BY receipt_count DESC
 LIMIT 5;
