@@ -7,7 +7,7 @@ I'm Evan, and I've been working through the Fetch Rewards analytics data for you
 ## **Questions About the Data**  
 - Can you confirm whether `"FINISHED"` in `rewardsReceiptStatus` is equivalent to `"ACCEPTED"` for transaction completion?  
 - Will we be adding more recent datasets for our analysis? This would help with understanding users in the current year (e.g. users over the last 6 months or month over month).
-- Should we be filtering receipts based on additional criteria to remove test data or incomplete transactions?  
+- Should we be filtering data based on additional criteria to remove test data or incomplete transactions?  
 
 ## **Data Quality Issues Identified**  
 - There are many data inconsistencies, which required conversations to understand the data more thoroughly:
