@@ -1,14 +1,14 @@
 # Users Table
 
-| Column Name    | Data Type | Key Type    | Description                                            |
-| -------------- | --------- | ----------- | ------------------------------------------------------ |
-| user_id        | UUID      | Primary Key | Unique identifier for the user (UUID format).          |
-| sign_up_source | ENUM      |             | Source of user sign up. Values: Google, Email          |
-| state          | CHAR(2)   |             | US state abbreviation (e.g., 'CA', 'NY').              |
-| role           | ENUM      |             | User role. Possible values: 'consumer', 'fetch-staff'. |
-| active         | BOOLEAN   |             | Indicates whether the user is currently active.        |
-| create_date    | TIMESTAMP |             | Date and time when the user account was created.       |
-| last_login     | TIMESTAMP |             | Date and time of the user's last login.                |
+| Column Name    | Data Type | Key Type    | Description                                                     |
+| -------------- | --------- | ----------- |-----------------------------------------------------------------|
+| user_id        | UUID      | Primary Key | Unique identifier for the user (UUID format).                   |
+| sign_up_source | ENUM      |             | Source of user sign up. Values: Google, Email                   |
+| state          | CHAR(2)   |             | US state abbreviation (e.g., 'CA', 'NY').                       |
+| role           | ENUM      |             | User role. Possible values: 'consumer', 'fetch-staff', 'admin'. |
+| active         | BOOLEAN   |             | Indicates whether the user is currently active.                 |
+| create_date    | TIMESTAMP |             | Date and time when the user account was created.                |
+| last_login     | TIMESTAMP |             | Date and time of the user's last login.                         |
 
 ---
 
@@ -69,7 +69,7 @@
 | final_price                            | DECIMAL      |             | Final price of the item after discounts                                                   |
 | item_price                             | DECIMAL      |             | Original item price                                                                       |
 | price_after_coupon                     | DECIMAL      |             | Price after applying coupon                                                               |
-| points_earned                          | SMALLINT     |             | Points Earned                                                                             |
+| points_earned                          | INT          |             | Points Earned                                                                             |
 | points_payer_id                        | VARCHAR(255) |             | ID for points payer                                                                       |
 | needs_fetch_review                     | BOOLEAN      |             | Whether the item requires review                                                          |
 | needs_fetch_review_reason              | ENUM         |             | Reason for flag for fetch review. Values: `POINTS_GREATER_THAN_THRESHOLD`, `USER_FLAGGED` |
