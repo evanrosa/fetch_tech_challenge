@@ -53,7 +53,7 @@
 
 ### Receipts Notes:
 
-    Receipts table ID orginally is a MongoDB ObjectID and will need to be converted to a UUID.
+    Receipts table ID orginally is a MongoDB ObjectID and it's recommended that we convert it to a UUID.
 
 ---
 
