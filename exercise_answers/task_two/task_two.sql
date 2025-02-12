@@ -1,104 +1,53 @@
--- Query 1: Find the top 5 brands by distinct receipts scanned in the most recent full month.
-WITH recent_month AS (
-  SELECT
-    DATE( MAX("date_scanned")) AS start_date,
-    DATE( MAX("date_scanned")) + INTERVAL '1 month' AS end_date
-  FROM receipts
+-- Question 1:
+-- What are the top 5 brands by receipts scanned for most recent month?
+-- The dataset only contains data from 2021, so querying the most recent calendar month would return no results.
+-- This query dynamically finds the latest month with data and retrieves the top 5 brands.
+-- If the latest month has fewer than 5 brands, it expands to include the prior month to ensure meaningful results.
+
+WITH month_ranked AS (
+    SELECT
+        TO_CHAR(r.date_scanned, 'YYYY-MM') AS month_year,
+        b.name AS brand_name,
+        COUNT(r.receipt_id) AS receipts_scanned,
+        ROW_NUMBER() OVER (PARTITION BY TO_CHAR(r.date_scanned, 'YYYY-MM') ORDER BY COUNT(r.receipt_id) DESC) AS rank_per_month
+    FROM receipts r
+    JOIN receipt_items ri ON r.receipt_id = ri.receipt_id
+    JOIN brands b ON ri.brand_code = b.brand_code
+    WHERE r.receipt_id IS NOT NULL
+    GROUP BY month_year, b.name
+    ORDER BY month_year DESC, receipts_scanned DESC
+),
+latest_month AS (
+    SELECT month_year FROM month_ranked ORDER BY month_year DESC LIMIT 1
+),
+expanded_data AS (
+    SELECT * FROM month_ranked WHERE month_year = (SELECT month_year FROM latest_month)
+    UNION ALL
+    SELECT * FROM month_ranked WHERE month_year < (SELECT month_year FROM latest_month)
+    ORDER BY month_year DESC, receipts_scanned DESC
+    LIMIT 5
 )
+SELECT brand_name, receipts_scanned, month_year
+FROM expanded_data;
+
+-- Question 3:
+-- When considering average spend from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?
+-- There are not and "accepted" values in rewardsReceiptStatus, replacing with finished.
 SELECT
-  b.name AS brand_name,
-  COUNT(DISTINCT r.receipt_id) AS receipt_count
-FROM receipts r
-JOIN receipt_items ri ON r.receipt_id = ri.receipt_id
-JOIN brands b ON ri.brand_code = b.brand_code
-JOIN recent_month rm
-    ON DATE(r.date_scanned) >= rm.start_date
-    AND DATE(r.date_scanned) < rm.end_date
-GROUP BY b.name
-ORDER BY receipt_count DESC
-LIMIT 5;
-
-
-
--- Query 2: Compare brand rankings by receipt count for the recent and previous months.
-WITH recent AS (
-  SELECT b.name AS brand_name,
-         COUNT(DISTINCT r.receipt_id) AS receipt_count,
-         'recent' AS period
-  FROM receipts r
-  JOIN receipt_items ri ON r.receipt_id = ri.receipt_id
-  JOIN brands b ON ri.brand_code = b.brand_code
-  WHERE r.date_scanned >= date_trunc('month', current_date) - interval '1 month'
-    AND r.date_scanned < date_trunc('month', current_date)
-  GROUP BY b.name
-),
-previous AS (
-  SELECT b.name AS brand_name,
-         COUNT(DISTINCT r.receipt_id) AS receipt_count,
-         'previous' AS period
-  FROM receipts r
-  JOIN receipt_items ri ON r.receipt_id = ri.receipt_id
-  JOIN brands b ON ri.brand_code = b.brand_code
-  WHERE r.date_scanned >= date_trunc('month', current_date) - interval '2 month'
-    AND r.date_scanned < date_trunc('month', current_date) - interval '1 month'
-  GROUP BY b.name
-),
-combined AS (
-  SELECT * FROM recent
-  UNION ALL
-  SELECT * FROM previous
-)
-SELECT period,
-       brand_name,
-       receipt_count,
-       RANK() OVER (PARTITION BY period ORDER BY receipt_count DESC) AS rank_position
-FROM combined
-ORDER BY period, rank_position;
-
-
-
-
--- Query 3: Compare the average total_spent for receipts with Accepted vs Rejected status.
-SELECT rewards_receipt_status,
-       AVG(total_spent) AS avg_spend
+    rewards_receipt_status,
+    AVG(total_spent) AS avg_spent
 FROM receipts
-WHERE rewards_receipt_status IN ('Accepted', 'Rejected')
+WHERE
+    rewards_receipt_status IN ('FINISHED', 'REJECTED') AND total_spent > 0
 GROUP BY rewards_receipt_status;
 
-
-
-
--- Query 4: Compare the sum of purchased_item_count for receipts with Accepted vs Rejected status.
-SELECT rewards_receipt_status,
-       SUM(purchased_item_count) AS total_items_purchased
+-- Question 4:
+-- When considering total number of items purchased from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?
+-- There are not and "accepted" values in rewardsReceiptStatus, replacing with finished.
+SELECT
+    rewards_receipt_status,
+    SUM(purchased_item_count) AS total_items
 FROM receipts
-WHERE rewards_receipt_status IN ('Accepted', 'Rejected')
+WHERE
+    rewards_receipt_status IN ('FINISHED', 'REJECTED')
 GROUP BY rewards_receipt_status;
-
-
-
--- Query 5: Identify the brand with the highest spend among users created within the past 6 months.
-SELECT b.name AS brand_name,
-       SUM(r.total_spent) AS total_spend
-FROM receipts r
-JOIN users u ON r.user_id = u.user_id
-JOIN receipt_items ri ON r.receipt_id = ri.receipt_id
-JOIN brands b ON ri.brand_code = b.brand_code
-WHERE u.create_date >= current_date - interval '6 month'
-GROUP BY b.name
-ORDER BY total_spend DESC
-LIMIT 1;
-
-
-
--- Query 6: Identify the brand with the most transactions among users created within the past 6 months.
-SELECT b.name AS brand_name,
-       COUNT(DISTINCT r.receipt_id) AS transaction_count
-FROM receipts r
-JOIN users u ON r.user_id = u.user_id
-JOIN receipt_items ri ON r.receipt_id = ri.receipt_id
-JOIN brands b ON ri.brand_code = b.brand_code
-WHERE u.create_date >= current_date - interval '6 month'
-GROUP BY b.name
-ORDER BY transaction_count DESC
-LIMIT 1;
